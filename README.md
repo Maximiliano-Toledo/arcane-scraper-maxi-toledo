@@ -297,7 +297,8 @@ grep "ERROR" logs/aventura.log
 
 ## 👥 Autor
 
-Desarrollado para desafío técnico - Automatización de Manuscritos Sagrados.
+- Maximiliano Martin Toledo
+- Desarrollado para desafío técnico - Automatización de Manuscritos Sagrados.
 
 ---
 
