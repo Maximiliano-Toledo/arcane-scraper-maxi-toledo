@@ -1,0 +1,209 @@
+# 🏰 Sherpa Manuscript Automation - Git Ignore
+
+# ===========================================
+# 📦 Dependencies
+# ===========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ===========================================
+# 🔧 Build outputs
+# ===========================================
+dist/
+build/
+*.tsbuildinfo
+
+# ===========================================
+# 🌐 Environment variables
+# ===========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ===========================================
+# 📝 Logs
+# ===========================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ===========================================
+# 📥 Downloads (archivos de manuscritos)
+# ===========================================
+downloads/
+*.pdf
+
+# ===========================================
+# 🧪 Testing
+# ===========================================
+coverage/
+.nyc_output/
+junit.xml
+
+# ===========================================
+# 💾 Operating System
+# ===========================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ===========================================
+# 🔧 IDEs and Editors
+# ===========================================
+
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains IDEs
+.idea/
+*.swp
+*.swo
+*~
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ===========================================
+# 🎭 Playwright
+# ===========================================
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ===========================================
+# 📸 Screenshots y Videos
+# ===========================================
+screenshots/
+videos/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webm
+*.mp4
+
+# ===========================================
+# 🔒 Security
+# ===========================================
+*.key
+*.pem
+*.p12
+*.crt
+*.csr
+secrets.json
+
+# ===========================================
+# 🗜️ Temporary files
+# ===========================================
+*.tmp
+*.temp
+temp/
+tmp/
+
+# ===========================================
+# 📊 Monitoring y Analytics
+# ===========================================
+.nyc_output/
+coverage/
+*.lcov
+
+# ===========================================
+# 🔧 Cache directories
+# ===========================================
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# ===========================================
+# 📦 Optional npm cache directory
+# ===========================================
+.npm
+
+# ===========================================
+# 🔧 Optional REPL history
+# ===========================================
+.node_repl_history
+
+# ===========================================
+# 📦 Dependency directories
+# ===========================================
+jspm_packages/
+
+# ===========================================
+# 🌐 Serverless directories
+# ===========================================
+.serverless/
+
+# ===========================================
+# 🔧 FuseBox cache
+# ===========================================
+.fusebox/
+
+# ===========================================
+# 🔧 DynamoDB Local files
+# ===========================================
+.dynamodb/
+
+# ===========================================
+# 🔧 TernJS port file
+# ===========================================
+.tern-port
