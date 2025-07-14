@@ -1,7 +1,7 @@
 {
   "name": "sherpa-manuscript-automation",
   "version": "1.0.0",
-  "description": "Automatizador profesional para el desafío técnico de manuscritos sagrados de Sherpa",
+  "description": "Desafío técnico de manuscritos sagrados de Sherpa",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsup src/index.ts --out-dir dist --format cjs",
