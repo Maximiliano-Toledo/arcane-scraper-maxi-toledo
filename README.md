@@ -89,11 +89,6 @@ npm start
 npm run lint
 npm run format
 
-# Testing
-npm test
-npm run test:watch
-npm run test:coverage
-
 # Limpieza
 npm run clean
 ```
@@ -128,8 +123,7 @@ sherpa-manuscript-automation/
 │       └── 📄 index.ts                # Constantes y selectores
 ├── 📁 dist/                     # Código compilado
 ├── 📁 logs/                     # Archivos de log
-├── 📁 downloads/                # PDFs descargados
-└── 📁 tests/                    # Tests unitarios
+└── 📁 downloads/                # PDFs descargados
 ```
 
 ## ⚙️ Configuración
@@ -146,6 +140,77 @@ sherpa-manuscript-automation/
 | `LOG_LEVEL` | Nivel de logging | `info` |
 
 Ver `.env.example` para configuración completa.
+
+```
+# 🏰 Configuración Principal de Arcane Scraper
+
+# ===========================================
+# 🌐 CONFIGURACIÓN DE LA APLICACIÓN
+# ===========================================
+
+# URL del sitio objetivo
+URL=https://pruebatecnica-sherpa-production.up.railway.app/
+
+# Número máximo de páginas a procesar
+MAX_PAGES=5
+
+# Directorios de trabajo
+DOWNLOAD_PATH=./downloads
+LOG_PATH=./logs
+
+# ===========================================
+# 🔐 CREDENCIALES DE ACCESO
+# ===========================================
+
+# Credenciales para autenticación
+EMAIL=monje@sherpa.local
+PASSWORD=cript@123
+
+# ===========================================
+# 🌐 CONFIGURACIÓN DE API EXTERNA
+# ===========================================
+
+# URL de la API para desafíos
+API_URL=https://backend-production-9d875.up.railway.app
+API_TIMEOUT=15000
+
+# ===========================================
+# 🔧 CONFIGURACIÓN DEL NAVEGADOR
+# ===========================================
+
+# Modo headless (true = sin ventana, false = con ventana)
+HEADLESS=false
+
+# Dimensiones del navegador
+BROWSER_WIDTH=1280
+BROWSER_HEIGHT=720
+
+# Velocidad de ejecución (0 = máxima velocidad, 1000 = 1 segundo entre acciones)
+SLOW_MO=500
+
+# ===========================================
+# 📝 CONFIGURACIÓN DE LOGGING
+# ===========================================
+
+# Nivel de logging (error, warn, info, debug)
+LOG_LEVEL=info
+
+# ===========================================
+# ⏱️ TIMEOUTS Y REINTENTOS
+# ===========================================
+
+# Timeouts en milisegundos
+DOWNLOAD_TIMEOUT=30000
+MODAL_TIMEOUT=15000
+NAVIGATION_TIMEOUT=10000
+UNLOCK_TIMEOUT=10000
+
+# Número máximo de reintentos
+MAX_DOWNLOAD_ATTEMPTS=3
+MAX_INPUT_ATTEMPTS=5
+RETRY_DELAY=2000
+
+```
 
 ## 🔧 Funcionalidades Técnicas
 
@@ -185,9 +250,9 @@ adventureLogger.error('❌ Error encontrado');
 ### **Resumen Final**
 ```
 📊 ESTADÍSTICAS FINALES:
-   📊 Total códigos obtenidos: 8 (5 de PDFs + 3 de APIs)
-   📚 Manuscritos procesados: 12
-   📄 Páginas recorridas: 3
+   📊 Total códigos obtenidos: 6 (4 de PDFs + 2 de APIs)
+   📚 Manuscritos procesados: 6
+   📄 Páginas recorridas: 2
    ⏱️ Tiempo de ejecución: 2m 45s
 ```
 
@@ -195,19 +260,6 @@ adventureLogger.error('❌ Error encontrado');
 - 📥 **PDFs**: Descargados en `./downloads/`
 - 📝 **Logs**: Detallados en `./logs/aventura.log`
 - ❌ **Errores**: Separados en `./logs/error.log`
-
-## 🧪 Testing
-
-```bash
-# Ejecutar todos los tests
-npm test
-
-# Tests con watch mode
-npm run test:watch
-
-# Coverage report
-npm run test:coverage
-```
 
 ## 🐛 Troubleshooting
 
@@ -241,30 +293,11 @@ tail -f logs/error.log
 grep "ERROR" logs/aventura.log
 ```
 
-## 🤝 Contribución
 
-1. Fork del proyecto
-2. Crear branch de feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit de cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. Push al branch (`git push origin feature/nueva-funcionalidad`)
-5. Crear Pull Request
-
-## 📝 Changelog
-
-### **v1.0.0** - Initial Release
-- ✅ Arquitectura modular completa
-- ✅ Todos los tipos de manuscritos soportados
-- ✅ Logging avanzado y manejo de errores
-- ✅ Extracción robusta de PDFs
-- ✅ Integración con APIs externas
-
-## 📄 Licencia
-
-MIT License - ver archivo `LICENSE` para detalles.
 
 ## 👥 Autor
 
-Desarrollado para el desafío técnico de **Sherpa** - Automatización de Manuscritos Sagrados.
+Desarrollado para desafío técnico - Automatización de Manuscritos Sagrados.
 
 ---
 
