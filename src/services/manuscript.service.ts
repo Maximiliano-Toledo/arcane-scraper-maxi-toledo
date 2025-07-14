@@ -136,8 +136,12 @@ export class ManuscriptService {
                     const h3Element = await elemento.$('h3');
                     const titulo = h3Element ? await h3Element.textContent() : `Manuscrito_${i + 1}`;
 
+
+
                     let siglo = 'XX';
-                    const sigloMatch = texto.match(/Siglo\s+([IVXLC]+)/i);
+                    const sigloMatch = texto.match(/Siglo\s+(X{0,3}(IX|IV|V?I{0,3}|V)?)/i);
+
+
                     if (sigloMatch) siglo = sigloMatch[1];
 
                     const estado = await this.detectManuscriptType(elemento, texto);
