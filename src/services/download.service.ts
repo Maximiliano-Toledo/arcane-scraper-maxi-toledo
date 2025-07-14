@@ -4,7 +4,7 @@ import path from 'path';
 import { BrowserService } from './browser.service';
 import { appConfig } from '@/config/app.config';
 import { DownloadResult } from '@/types';
-import { RETRY_CONFIG } from '@/constants';
+import { RETRY_CONFIG, TIMEOUTS } from '@/constants';
 import { delay } from '@/utils/helpers';
 import { adventureLogger } from '@/utils/logger';
 
@@ -30,7 +30,7 @@ export class DownloadService {
     }
 
     /**
-     * Descarga un archivo con reintentos automáticos
+     * Descarga un archivo con reintentos automáticos - OPTIMIZADO
      */
     async downloadWithRetries(
         download: Download,
@@ -41,11 +41,19 @@ export class DownloadService {
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                adventureLogger.download(`📥 Intento ${attempt} de descarga: ${fileName}`);
+                adventureLogger.download(`📥 Descargando: ${fileName} (intento ${attempt}/${maxAttempts})`);
 
-                await download.saveAs(filePath);
+                // ✅ OPTIMIZACIÓN: Timeout más corto y específico
+                const downloadPromise = download.saveAs(filePath);
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Timeout de descarga')), TIMEOUTS.DOWNLOAD)
+                );
 
-                // Verificar que el archivo se descargó correctamente
+                await Promise.race([downloadPromise, timeoutPromise]);
+
+                // ✅ OPTIMIZACIÓN: Verificación más rápida
+                await this.waitForFileStability(filePath);
+
                 const validation = this.validateDownload(filePath);
 
                 if (validation.isValid) {
@@ -56,7 +64,7 @@ export class DownloadService {
                         fileSize: validation.size
                     };
                 } else {
-                    throw new Error(validation.error || 'Archivo descargado está vacío o corrupto');
+                    throw new Error(validation.error || 'Archivo descargado inválido');
                 }
 
             } catch (error) {
@@ -70,8 +78,9 @@ export class DownloadService {
                     };
                 }
 
-                adventureLogger.download(`⏳ Esperando ${RETRY_CONFIG.RETRY_DELAY}ms antes del siguiente intento...`);
-                await delay(RETRY_CONFIG.RETRY_DELAY);
+                // ✅ OPTIMIZACIÓN: Delay más corto entre reintentos
+                adventureLogger.download(`⏳ Reintentando en ${RETRY_CONFIG.RETRY_DELAY / 2}ms...`);
+                await delay(RETRY_CONFIG.RETRY_DELAY / 2);
             }
         }
 
@@ -82,7 +91,36 @@ export class DownloadService {
     }
 
     /**
-     * Valida que un archivo descargado sea válido
+     * Espera a que el archivo esté completamente descargado y estable
+     */
+    private async waitForFileStability(filePath: string, maxWaitTime: number = 5000): Promise<void> {
+        const startTime = Date.now();
+        let lastSize = 0;
+        let stableCount = 0;
+
+        while (Date.now() - startTime < maxWaitTime) {
+            if (existsSync(filePath)) {
+                const currentSize = statSync(filePath).size;
+
+                if (currentSize === lastSize && currentSize > 0) {
+                    stableCount++;
+                    if (stableCount >= 2) {
+                        // Archivo estable durante 2 verificaciones consecutivas
+                        return;
+                    }
+                } else {
+                    stableCount = 0;
+                }
+
+                lastSize = currentSize;
+            }
+
+            await delay(250); // Verificar cada 250ms
+        }
+    }
+
+    /**
+     * Valida que un archivo descargado sea válido - OPTIMIZADO
      */
     private validateDownload(filePath: string): { isValid: boolean; error?: string; size?: number } {
         try {
@@ -92,12 +130,28 @@ export class DownloadService {
 
             const stats = statSync(filePath);
 
-            if (stats.size < 1000) {
+            // ✅ OPTIMIZACIÓN: Validación más permisiva para archivos pequeños pero válidos
+            if (stats.size < 500) {
                 return {
                     isValid: false,
                     error: `Archivo demasiado pequeño: ${stats.size} bytes`,
                     size: stats.size
                 };
+            }
+
+            // ✅ OPTIMIZACIÓN: Verificación básica de PDF
+            if (filePath.endsWith('.pdf')) {
+                const fs = require('fs');
+                const buffer = fs.readFileSync(filePath, { start: 0, end: 4 });
+                const header = buffer.toString();
+
+                if (!header.startsWith('%PDF')) {
+                    return {
+                        isValid: false,
+                        error: 'El archivo no es un PDF válido',
+                        size: stats.size
+                    };
+                }
             }
 
             return { isValid: true, size: stats.size };
@@ -108,7 +162,7 @@ export class DownloadService {
     }
 
     /**
-     * Maneja una descarga iniciada por click en un botón
+     * Maneja una descarga iniciada por click en un botón - OPTIMIZADO
      */
     async handleButtonDownload(
         buttonSelector: string,
@@ -117,18 +171,39 @@ export class DownloadService {
         try {
             const page = this.browserService.getPage();
 
-            adventureLogger.download(`📥 Iniciando descarga con botón: ${buttonSelector}`);
+            adventureLogger.download(`📥 Iniciando descarga: ${fileName}`);
 
-            const [download] = await Promise.all([
-                page.waitForEvent('download'),
-                this.browserService.click(buttonSelector)
-            ]);
+            // ✅ OPTIMIZACIÓN: Verificar si el archivo ya existe
+            if (this.isFileDownloaded(fileName)) {
+                adventureLogger.download(`📄 Archivo ya existe: ${fileName}`);
+                return {
+                    success: true,
+                    filePath: this.getDownloadPath(fileName),
+                    fileSize: statSync(this.getDownloadPath(fileName)).size
+                };
+            }
+
+            // ✅ OPTIMIZACIÓN: Setup de descarga más eficiente
+            let download: Download;
+
+            try {
+                // Timeout más corto para click + descarga
+                const downloadPromise = page.waitForEvent('download', { timeout: 10000 });
+                const clickPromise = this.browserService.click(buttonSelector);
+
+                await clickPromise;
+                download = await downloadPromise;
+
+                adventureLogger.download(`📦 Descarga iniciada para: ${fileName}`);
+            } catch (error) {
+                throw new Error(`No se pudo iniciar la descarga: ${error}`);
+            }
 
             return await this.downloadWithRetries(download, fileName);
 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Error en descarga';
-            adventureLogger.error(`Error al manejar descarga de botón`, error);
+            adventureLogger.error(`❌ Error al manejar descarga: ${errorMessage}`);
             return {
                 success: false,
                 error: errorMessage
@@ -194,11 +269,15 @@ export class DownloadService {
     }
 
     /**
-     * Verifica si un archivo específico ya fue descargado
+     * Verifica si un archivo específico ya fue descargado - OPTIMIZADO
      */
     isFileDownloaded(fileName: string): boolean {
         const filePath = this.getDownloadPath(fileName);
-        return existsSync(filePath) && statSync(filePath).size > 1000;
+        try {
+            return existsSync(filePath) && statSync(filePath).size > 500;
+        } catch {
+            return false;
+        }
     }
 
     /**
@@ -208,5 +287,64 @@ export class DownloadService {
         this.downloadPath = newPath;
         this.ensureDownloadDirectory();
         adventureLogger.download(`Directorio de descargas cambiado a: ${newPath}`);
+    }
+
+    /**
+     * ✅ NUEVO: Método para limpiar descargas parciales o corruptas
+     */
+    async cleanPartialDownloads(): Promise<void> {
+        try {
+            const files = this.getDownloadedFiles();
+            let cleaned = 0;
+
+            for (const file of files) {
+                const filePath = this.getDownloadPath(file);
+                const validation = this.validateDownload(filePath);
+
+                if (!validation.isValid) {
+                    const fs = require('fs-extra');
+                    await fs.remove(filePath);
+                    adventureLogger.download(`🗑️ Archivo corrupto eliminado: ${file}`);
+                    cleaned++;
+                }
+            }
+
+            if (cleaned > 0) {
+                adventureLogger.download(`🧹 Se limpiaron ${cleaned} archivos corruptos`);
+            }
+        } catch (error) {
+            adventureLogger.error('Error limpiando archivos parciales', error);
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Obtiene estadísticas de descarga
+     */
+    getDownloadStats(): {
+        totalFiles: number;
+        totalSize: number;
+        averageSize: number;
+        validFiles: number;
+    } {
+        const files = this.getDownloadedFiles();
+        let totalSize = 0;
+        let validFiles = 0;
+
+        for (const file of files) {
+            const filePath = this.getDownloadPath(file);
+            const validation = this.validateDownload(filePath);
+
+            if (validation.isValid && validation.size) {
+                totalSize += validation.size;
+                validFiles++;
+            }
+        }
+
+        return {
+            totalFiles: files.length,
+            totalSize,
+            averageSize: validFiles > 0 ? Math.round(totalSize / validFiles) : 0,
+            validFiles
+        };
     }
 }

@@ -171,51 +171,154 @@ class SherpaManuscriptAutomation {
     /**
      * Muestra el resumen final de la aventura
      */
+    /**
+     * Muestra el resumen final con todos los códigos obtenidos
+     */
     private displayFinalSummary(summary: ExecutionSummary): void {
-        adventureLogger.endSeparator();
+        const tiempoTotal = Date.now() - this.startTime;
+        const tiempoFormateado = formatTime(tiempoTotal);
 
-        // Mostrar resumen de códigos obtenidos
-        adventureLogger.summary('\n📊 ========== RESUMEN DE CÓDIGOS OBTENIDOS ==========');
+        adventureLogger.bigSeparator();
+        adventureLogger.adventure('🏆 ===============================================');
+        adventureLogger.adventure('🏆          RESUMEN FINAL DE LA AVENTURA');
+        adventureLogger.adventure('🏆 ===============================================');
 
+        // Estadísticas generales
+        adventureLogger.summary(`📊 Manuscritos procesados: ${summary.manuscritosProcesados}`);
+        adventureLogger.summary(`📄 Páginas recorridas: ${summary.paginasRecorridas}`);
+        adventureLogger.summary(`⏱️ Tiempo total de ejecución: ${tiempoFormateado}`);
+        adventureLogger.summary(`🔑 Total de códigos obtenidos: ${summary.totalCodigos}`);
+
+        adventureLogger.separator();
+
+        // CÓDIGOS DE PDFs
         if (summary.PDFs.length > 0) {
-            adventureLogger.summary('\n📄 CÓDIGOS EXTRAÍDOS DE PDFs:');
-            summary.PDFs.forEach((item, index) => {
-                adventureLogger.summary(`   ${index + 1}. ${item.manuscrito} (Siglo ${item.siglo}) → "${item.codigoExtraido}"`);
+            adventureLogger.adventure('📚 ===============================================');
+            adventureLogger.adventure('📚           CÓDIGOS EXTRAÍDOS DE PDFs');
+            adventureLogger.adventure('📚 ===============================================');
+
+            summary.PDFs.forEach((pdf, index) => {
+                if (pdf.codigoExtraido) {
+                    adventureLogger.code(`📜 ${index + 1}. "${pdf.manuscrito}" (${pdf.siglo})`);
+                    adventureLogger.code(`   🗝️ Código: ${pdf.codigoExtraido}`);
+                    adventureLogger.code('   ──────────────────────────────────────');
+                }
             });
+
+            // Lista compacta de códigos PDF
+            const codigosPDF = summary.PDFs
+                .filter(pdf => pdf.codigoExtraido)
+                .map(pdf => pdf.codigoExtraido);
+
+            adventureLogger.adventure('📋 RESUMEN DE CÓDIGOS PDF:');
+            adventureLogger.code(`   [${codigosPDF.join(', ')}]`);
+        } else {
+            adventureLogger.warning('📚 No se extrajeron códigos de PDFs');
         }
 
+        adventureLogger.separator();
+
+        // CÓDIGOS DE APIs
         if (summary.APIs.length > 0) {
-            adventureLogger.summary('\n🌐 CÓDIGOS OBTENIDOS DE APIs (Desafíos Resueltos):');
-            summary.APIs.forEach((item, index) => {
-                adventureLogger.summary(`   ${index + 1}. ${item.manuscrito} (Siglo ${item.siglo})`);
-                adventureLogger.summary(`      📥 Input: "${item.codigoInput}"`);
-                adventureLogger.summary(`      📤 Output: "${item.codigoObtenido}"`);
+            adventureLogger.adventure('🌐 ===============================================');
+            adventureLogger.adventure('🌐           CÓDIGOS OBTENIDOS DE APIs');
+            adventureLogger.adventure('🌐 ===============================================');
+
+            summary.APIs.forEach((api, index) => {
+                adventureLogger.api(`🔗 ${index + 1}. "${api.manuscrito}" (${api.siglo})`);
+                if (api.codigoInput) {
+                    adventureLogger.api(`   📥 Input: ${api.codigoInput}`);
+                }
+                if (api.codigoObtenido) {
+                    adventureLogger.api(`   📤 Output: ${api.codigoObtenido}`);
+                }
+                adventureLogger.api('   ──────────────────────────────────────');
             });
+
+            // Lista compacta de códigos API
+            const codigosAPI = summary.APIs
+                .filter(api => api.codigoObtenido)
+                .map(api => api.codigoObtenido);
+
+            adventureLogger.adventure('📋 RESUMEN DE CÓDIGOS API:');
+            adventureLogger.api(`   [${codigosAPI.join(', ')}]`);
+        } else {
+            adventureLogger.warning('🌐 No se obtuvieron códigos de APIs');
         }
 
-        // Estadísticas finales
-        adventureLogger.summary(`\n🏆 ESTADÍSTICAS FINALES:`);
-        adventureLogger.summary(`   📊 Total códigos obtenidos: ${summary.totalCodigos} (${summary.PDFs.length} de PDFs + ${summary.APIs.length} de APIs)`);
-        adventureLogger.summary(`   📚 Manuscritos procesados: ${summary.manuscritosProcesados}`);
-        adventureLogger.summary(`   📄 Páginas recorridas: ${summary.paginasRecorridas}`);
-        adventureLogger.summary(`   ⏱️ Tiempo de ejecución: ${formatTime(summary.tiempoEjecucion)}`);
+        adventureLogger.separator();
 
+        // RESUMEN CONSOLIDADO
+        adventureLogger.adventure('🎯 ===============================================');
+        adventureLogger.adventure('🎯        TODOS LOS CÓDIGOS OBTENIDOS');
+        adventureLogger.adventure('🎯 ===============================================');
+
+        const todosLosCodigos = [
+            ...summary.PDFs.filter(pdf => pdf.codigoExtraido).map(pdf => ({
+                codigo: pdf.codigoExtraido!,
+                fuente: 'PDF',
+                manuscrito: pdf.manuscrito,
+                siglo: pdf.siglo
+            })),
+            ...summary.APIs.filter(api => api.codigoObtenido).map(api => ({
+                codigo: api.codigoObtenido!,
+                fuente: 'API',
+                manuscrito: api.manuscrito,
+                siglo: api.siglo
+            }))
+        ];
+
+        if (todosLosCodigos.length > 0) {
+            todosLosCodigos.forEach((item, index) => {
+                const emoji = item.fuente === 'PDF' ? '📜' : '🌐';
+                adventureLogger.success(`${emoji} ${index + 1}. ${item.codigo} (${item.fuente}) - "${item.manuscrito}" (${item.siglo})`);
+            });
+
+            adventureLogger.adventure('');
+            adventureLogger.adventure('📝 LISTA FINAL DE CÓDIGOS:');
+            const listaFinal = todosLosCodigos.map(item => item.codigo).join(', ');
+            adventureLogger.success(`   [${listaFinal}]`);
+
+            // Estadísticas por fuente
+            const codigosPorFuente = todosLosCodigos.reduce((acc, item) => {
+                acc[item.fuente] = (acc[item.fuente] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+
+            adventureLogger.adventure('');
+            adventureLogger.adventure('📊 ESTADÍSTICAS DETALLADAS:');
+            Object.entries(codigosPorFuente).forEach(([fuente, cantidad]) => {
+                const emoji = fuente === 'PDF' ? '📜' : '🌐';
+                adventureLogger.summary(`   ${emoji} Códigos de ${fuente}: ${cantidad}`);
+            });
+        } else {
+            adventureLogger.warning('❌ No se obtuvieron códigos en esta ejecución');
+        }
+
+        // Errores si los hay
         if (summary.errores.length > 0) {
-            adventureLogger.summary(`   ⚠️ Errores encontrados: ${summary.errores.length}`);
+            adventureLogger.separator();
+            adventureLogger.adventure('⚠️ ===============================================');
+            adventureLogger.adventure('⚠️                 ERRORES ENCONTRADOS');
+            adventureLogger.adventure('⚠️ ===============================================');
+
             summary.errores.forEach((error, index) => {
-                adventureLogger.warning(`      ${index + 1}. ${error}`);
+                adventureLogger.error(`${index + 1}. ${error}`);
             });
         }
 
-        adventureLogger.summary('📊 ====================================================');
+        adventureLogger.separator();
 
         // Mensaje final
         if (summary.totalCodigos > 0) {
             adventureLogger.adventure('🎉 ¡AVENTURA COMPLETADA CON ÉXITO!');
             adventureLogger.adventure('🏆 ¡Has demostrado tu maestría en el scraping arcano!');
+            adventureLogger.adventure(`🗝️ Total de códigos conquistados: ${summary.totalCodigos}`);
         } else {
             adventureLogger.warning('⚠️ Aventura completada pero sin códigos obtenidos');
         }
+
+        adventureLogger.adventure('🏰 ===============================================');
     }
 
     /**

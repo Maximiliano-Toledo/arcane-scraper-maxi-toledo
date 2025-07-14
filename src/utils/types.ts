@@ -118,7 +118,7 @@ export function createSafeNavigationOptions(
 /**
  * Acceso seguro a elementos de array
  */
-export function safeArrayAccess<T>(array: T[], index: number): T | undefined {
+export function safeArrayAccess<T>(array: readonly T[], index: number): T | undefined {
     if (index < 0 || index >= array.length) {
         return undefined;
     }
@@ -126,14 +126,20 @@ export function safeArrayAccess<T>(array: T[], index: number): T | undefined {
 }
 
 /**
- * Acceso seguro a propiedades de objeto
+ * Acceso seguro a propiedades de objeto - VERSIÓN CORREGIDA
  */
 export function safeObjectAccess<T, K extends keyof T>(
     obj: T,
     key: K
 ): T[K] | undefined {
-    return obj && key in obj ? obj[key] : undefined;
+    if (!obj || typeof obj !== 'object') {
+        return undefined;
+    }
+
+    // Usar hasOwnProperty en lugar del operador 'in'
+    return Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined;
 }
+
 
 /**
  * Tipo para RegExp match result que incluye grupos de captura

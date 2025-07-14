@@ -55,9 +55,16 @@ export class ManuscriptService {
 
         adventureLogger.manuscript(`📚 Procesando ${sortedManuscripts.length} manuscritos en orden cronológico`);
 
-        // Procesar manuscritos en orden
+        // ✅ CORRECCIÓN: Verificar que el manuscriptInfo existe antes de usarlo
         for (let i = 0; i < sortedManuscripts.length; i++) {
             const manuscriptInfo = sortedManuscripts[i];
+
+            // ✅ Type guard para verificar que manuscriptInfo existe
+            if (!manuscriptInfo) {
+                adventureLogger.warning(`⚠️ Manuscrito en índice ${i} es undefined, saltando...`);
+                continue;
+            }
+
             const nextManuscriptCentury = sortedManuscripts[i + 1]?.siglo || '?';
 
             adventureLogger.manuscript(`\n📜 ========================================`);
@@ -147,7 +154,8 @@ export class ManuscriptService {
                     adventureLogger.manuscript(`📋 Manuscrito ${i + 1}: "${titulo}" - Siglo ${siglo} (${convertRomanToNumber(siglo)}) - ${estado}`);
                 }
             } catch (error) {
-                adventureLogger.warning(`⚠️ Error procesando manuscrito ${i + 1}`, error);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                adventureLogger.warning(`⚠️ Error procesando manuscrito ${i + 1}: ${errorMessage}`);
             }
         }
 
@@ -228,6 +236,26 @@ export class ManuscriptService {
         }
     }
 
+    private addPDFCode(manuscriptInfo: ManuscriptInfo, codigo: string) {
+        const yaExiste = this.codigosObtenidos.PDFs.some(p =>
+            p.codigoExtraido === codigo && p.manuscrito === manuscriptInfo.titulo
+        );
+
+        if (yaExiste) {
+            adventureLogger.debug(`🟡 Código duplicado detectado para "${manuscriptInfo.titulo}", no se guarda.`);
+            return;
+        }
+
+        this.codigosObtenidos.PDFs.push({
+            manuscrito: manuscriptInfo.titulo,
+            siglo: manuscriptInfo.siglo,
+            codigoExtraido: codigo
+        });
+
+        adventureLogger.code(`🗝️ Código guardado: "${codigo}" para "${manuscriptInfo.titulo}"`);
+    }
+
+
     /**
      * Procesa manuscrito ya desbloqueado
      */
@@ -249,11 +277,7 @@ export class ManuscriptService {
             if (codigo) {
                 adventureLogger.code(`🗝️ Código guardado para próximo manuscrito (Siglo ${nextCentury}): "${codigo}"`);
 
-                this.codigosObtenidos.PDFs.push({
-                    manuscrito: manuscriptInfo.titulo,
-                    siglo: manuscriptInfo.siglo,
-                    codigoExtraido: codigo
-                });
+                this.addPDFCode(manuscriptInfo, codigo);
 
                 return { success: true, extractedCode: codigo };
             } else {
